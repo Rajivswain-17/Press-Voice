@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Press shortcut settings</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/settings.mjs"></script>
+</head>
+<body>
+  <main>
+    <a href="/">Manual dictation</a>
+    <h1>Shortcut settings</h1>
+    <form id="settings">
+      <fieldset id="options" disabled>
+        <legend>Global dictation</legend>
+        <label><input id="enabled" type="checkbox"> Enable global shortcut</label>
+        <p>Shortcut <output id="shortcut">None</output></p>
+        <button id="capture" type="button">Change shortcut</button>
+        <p id="capture-hint">Choose Left Ctrl, Right Ctrl, or a function key other than F12. Function keys may include left or right modifiers. The focused app can still receive the shortcut.</p>
+        <fieldset>
+          <legend>Recording mode</legend>
+          <label><input type="radio" name="mode" value="hold" checked> Hold to talk</label>
+          <label><input type="radio" name="mode" value="toggle"> Tap to toggle</label>
+        </fieldset>
+        <p>Cancellation key <kbd>Escape</kbd></p>
+        <p>Microphone uses the system default.</p>
+        <button id="save" type="submit">Save settings</button>
+      </fieldset>
+    </form>
+    <p id="message" role="status"></p>
+    <p id="listener-status">Loading shortcut settings…</p>
+    <p>Detected presses <output id="activations">0</output></p>
+  </main>
+</body>
+</html>

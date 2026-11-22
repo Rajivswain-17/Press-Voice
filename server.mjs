@@ -1,41 +1,46 @@
 import { createServer } from 'node:http'
 import { execFile } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { maxWavBytes, sampleRate } from './public/wav.mjs'
 import { createWhisperSession, engineError } from './whisper-server.mjs'
+import { openSettings } from './settings.mjs'
+import { createWindowsCompanion } from './windows-companion.mjs'
 
 const loopback = '127.0.0.1'
 const staticPages = new Map([
   ['/', ['index.html', 'text/html']],
+  ['/settings', ['settings.html', 'text/html']],
   ['/styles.css', ['styles.css', 'text/css']],
-  ...['app.mjs', 'recorder.mjs', 'wav.mjs', 'pcm-worklet.js']
+  ...['app.mjs', 'recorder.mjs', 'wav.mjs', 'pcm-worklet.js', 'settings.mjs']
     .map(file => ['/' + file, [file, 'text/javascript']])
 ])
 const errors = new Map([
   ['BAD_WAV', 400], ['BAD_ORIGIN', 403], ['NOT_FOUND', 404], ['METHOD', 405],
   ['BUSY', 409], ['TOO_LARGE', 413], ['MEDIA_TYPE', 415],
-  ['ENGINE_UNAVAILABLE', 503], ['ENGINE_TIMEOUT', 504]
+  ['ENGINE_UNAVAILABLE', 503], ['ENGINE_TIMEOUT', 504],
+  ['INVALID_SETTINGS', 400], ['SETTINGS_BUSY', 409], ['SHORTCUT_CONFLICT', 409],
+  ['COMPANION_UNAVAILABLE', 503]
 ])
 const tooLarge = () => engineError('TOO_LARGE', 'Recording exceeds the 60-second limit.')
 const badWav = () => engineError('BAD_WAV', 'Press needs nonempty 16 kHz mono PCM WAV audio.')
 
-function readWav(request) {
-  if (Number(request.headers['content-length']) > maxWavBytes) throw tooLarge()
+function readBody(request, maximum, overflow) {
+  if (Number(request.headers['content-length']) > maximum) throw overflow()
   return new Promise((done, reject) => {
     let size = 0
     const chunks = []
     request.on('data', chunk => {
       size += chunk.length
-      if (size > maxWavBytes) {
+      if (size > maximum) {
         chunks.length = 0
-        reject(tooLarge())
+        reject(overflow())
       } else chunks.push(chunk)
     })
     request.once('error', () => reject(badWav()))
     request.once('end', () => {
-      if (size <= maxWavBytes) done(Buffer.concat(chunks, size))
+      if (size <= maximum) done(Buffer.concat(chunks, size))
     })
   })
 }
@@ -50,7 +55,7 @@ function validateWav(wav) {
       wav.toString('ascii', 36, 40) !== 'data' || wav.readUInt32LE(40) !== wav.length - 44) throw badWav()
 }
 
-export function createPressServer({ transcribe }) {
+export function createPressServer({ transcribe, settings }) {
   let busy = false
   return createServer({ requestTimeout: 15000 }, async (request, response) => {
     const expectedHost = loopback + ':' + request.socket.localPort
@@ -64,6 +69,23 @@ export function createPressServer({ transcribe }) {
 
     try {
       if (request.headers.host !== expectedHost) throw engineError('BAD_ORIGIN', 'Open Press using the displayed local address.')
+      if (settings && ['/api/settings', '/api/settings/preview'].includes(request.url)) {
+        if (request.method === 'GET' && request.url === '/api/settings') return json(200, settings.get())
+        if (request.method !== 'POST') throw engineError('METHOD', 'Use POST to change shortcut settings.')
+        if (request.headers.origin !== 'http://' + expectedHost) throw engineError('BAD_ORIGIN', 'Change settings from the Press page.')
+        if (request.headers['content-type'] !== 'application/json') throw engineError('MEDIA_TYPE', 'Send JSON settings.')
+        const invalid = () => engineError('INVALID_SETTINGS', 'Shortcut settings are invalid.')
+        const body = await readBody(request, 2048, invalid)
+        let input
+        try { input = JSON.parse(body.toString('utf8')) } catch { throw invalid() }
+        if (request.url === '/api/settings/preview') {
+          if (typeof input !== 'boolean') throw invalid()
+          settings.preview(input)
+          return json(200, settings.get())
+        }
+        if (busy && input?.enabled === true) throw engineError('SETTINGS_BUSY', 'Finish transcription and try again.')
+        return json(200, await settings.update(input))
+      }
       if (request.url !== '/api/transcribe') {
         const asset = staticPages.get(request.url)
         if (!asset || request.method !== 'GET') throw engineError('NOT_FOUND', 'This Press page does not exist.')
@@ -79,7 +101,7 @@ export function createPressServer({ transcribe }) {
       if (busy) throw engineError('BUSY', 'A recording is already being transcribed.')
       busy = true
       try {
-        const wav = await readWav(request)
+        const wav = await readBody(request, maxWavBytes, tooLarge)
         validateWav(wav)
         const text = wav.subarray(44).some(byte => byte !== 0) ? await transcribe(wav) : ''
         json(200, { text })
@@ -99,7 +121,11 @@ export function createPressServer({ transcribe }) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const engine = createWhisperSession()
-  const server = createPressServer(engine)
+  const listener = createWindowsCompanion()
+  const settings = process.platform === 'win32' && process.env.LOCALAPPDATA
+    ? await openSettings({ file: join(process.env.LOCALAPPDATA, 'Press', 'settings.json'), listener })
+    : undefined
+  const server = createPressServer({ ...engine, settings })
   server.listen(0, loopback, () => {
     const url = 'http://' + loopback + ':' + server.address().port
     console.log('Open Press at ' + url)
@@ -116,6 +142,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     server.close()
     server.closeAllConnections()
     void engine.close().catch(() => { process.exitCode = 1 })
+    void settings?.close().catch(() => { process.exitCode = 1 })
   }
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)

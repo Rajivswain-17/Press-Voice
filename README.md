@@ -16,6 +16,18 @@ Press is a lightweight English dictation app for Windows. It runs locally in you
 
 If microphone permission is denied, allow microphone access in the browser's site permissions and Windows privacy settings, then retry. Once the local assets are installed, the app is designed to use loopback only. The [verification record](docs/phase-1-verification.md) tracks the disconnected-host run.
 
+## Build and try shortcut settings
+
+On Windows x64 with .NET Framework 4.8.1, run the following from the Press folder. The build uses the compiler included with Windows and writes an ignored executable to `runtime/`.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-companion.ps1
+```
+
+Launch Press, then open **Shortcut settings**. Choose **Change shortcut**, press and release the desired keys, choose **Hold to talk** or **Tap to toggle**, enable the shortcut, and save. The detected-press count shows when the Windows companion sees a press. Leave the settings page open when checking the count. Use the manual dictation page to record. Task 2B saves both modes and detects keys. Hotkey recording and insertion are later tasks.
+
+The supported choices are Left Ctrl, Right Ctrl, or a function key from F1 to F24 except F12. Function keys can include side-specific Ctrl, Shift and Alt. Press blocks known reserved examples and checks for observable registration conflicts. The foreground application can also receive the chosen keys. Use a chord that is free in your apps. Settings are saved in `%LOCALAPPDATA%\Press\settings.json`.
+
 ## Run the engine proof
 
 From the Press folder in Windows PowerShell, run:
