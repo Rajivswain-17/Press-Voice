@@ -23,7 +23,7 @@ This file is the authoritative status record.
 | 1D | Node-managed server and local inference route | 1A, shared WAV and HTTP contracts | Accepted | HTTP and lifecycle tests passed. The pinned engine worked through the app and the test-owned child exited. | Local implementation review completed. |
 | 1E | End-to-end integration and offline laptop demonstration | 1B, 1C, 1D | Accepted | The owner confirmed a fresh disconnected launch, physical microphone capture, transcription, manual editing and paste of the edited value into Notepad. | Local review and verification completed. |
 
-Current count: 1 of 6 phases and 5 of 5 Phase 1 tasks accepted. Publication awaits secure GitHub authentication.
+Current count: 1 of 6 phases and 5 of 5 Phase 1 tasks accepted. All four implementation and verification branches were published to GitHub.
 
 ## 1E manual test evidence
 
