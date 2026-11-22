@@ -20,7 +20,7 @@ This file is the authoritative status record.
 | 1A | Pinned Windows engine proof and governance | None | Accepted within revised scope | Fixture, hashes, timing, RAM, reuse, restart and loopback passed. Disconnected-host check deferred to 1E and pending. | Engine and harness checks passed. |
 | 1B | Microphone to validated WAV | 1A | Implemented | WAV and lifecycle tests pass. Real microphone check scheduled in 1E. | Local implementation review completed. |
 | 1C | Record, Stop, editable output and Copy | Shared recorder and HTTP contracts | Implemented | UI adapter tests pass. Browser keyboard and clipboard checks scheduled in 1E. | Local implementation review completed. |
-| 1D | Node-managed server and local inference route | 1A, shared WAV and HTTP contracts | Ready for plan approval | Not run | Pending |
+| 1D | Node-managed server and local inference route | 1A, shared WAV and HTTP contracts | Implemented | HTTP and lifecycle tests passed. One pinned-engine integration request passed and the owned child exited. | Local implementation review completed. |
 | 1E | End-to-end integration and offline laptop demonstration | 1B, 1C, 1D | Planned | Disconnected-host verification pending, including the check deferred from 1A. | Pending |
 
 Current count: 0 of 6 phases and 1 of 5 Phase 1 tasks accepted.
