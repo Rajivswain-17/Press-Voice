@@ -17,13 +17,21 @@ This file is the authoritative status record.
 
 | ID | Task | Dependencies | Status | Test results | Independent review |
 | --- | --- | --- | --- | --- | --- |
-| 1A | Pinned Windows engine proof and governance | None | Accepted within revised scope | Fixture, hashes, timing, RAM, reuse, restart and loopback passed. Disconnected-host check deferred to 1E and pending. | Engine and harness checks passed. |
-| 1B | Microphone to validated WAV | 1A | Implemented | WAV and lifecycle tests pass. Real microphone check scheduled in 1E. | Local implementation review completed. |
-| 1C | Record, Stop, editable output and Copy | Shared recorder and HTTP contracts | Implemented | UI adapter tests pass. Browser keyboard and clipboard checks scheduled in 1E. | Local implementation review completed. |
-| 1D | Node-managed server and local inference route | 1A, shared WAV and HTTP contracts | Implemented | HTTP and lifecycle tests passed. One pinned-engine integration request passed and the owned child exited. | Local implementation review completed. |
-| 1E | End-to-end integration and offline laptop demonstration | 1B, 1C, 1D | Planned | Disconnected-host verification pending, including the check deferred from 1A. | Pending |
+| 1A | Pinned Windows engine proof and governance | None | Accepted | Fixture, hashes, timing, RAM, reuse, restart and loopback passed. The deferred disconnected-host check passed in 1E. | Engine and harness checks passed. |
+| 1B | Microphone to validated WAV | 1A | Accepted | WAV and lifecycle tests passed. The owner recorded real speech and received a transcript. | Local implementation review completed. |
+| 1C | Record, Stop, editable output and Copy | Shared recorder and HTTP contracts | Accepted | UI tests and Chrome's edited clipboard check passed. The owner confirmed paste to Notepad. | Local implementation review completed. |
+| 1D | Node-managed server and local inference route | 1A, shared WAV and HTTP contracts | Accepted | HTTP and lifecycle tests passed. The pinned engine worked through the app and the test-owned child exited. | Local implementation review completed. |
+| 1E | End-to-end integration and offline laptop demonstration | 1B, 1C, 1D | Accepted | The owner confirmed a fresh disconnected launch, physical microphone capture, transcription, manual editing and paste of the edited value into Notepad. | Local review and verification completed. |
 
-Current count: 0 of 6 phases and 1 of 5 Phase 1 tasks accepted.
+Current count: 1 of 6 phases and 5 of 5 Phase 1 tasks accepted. Publication awaits secure GitHub authentication.
+
+## 1E manual test evidence
+
+- The owner launched Press, recorded their microphone, received a transcript and copied the text into Notepad.
+- Spoken text: “Hey, I am texting press without any internet connection.”
+- Generated text: “Hey, I am texting press without any love connection.”
+- The output substituted “love” for “internet.” Preserve the pinned Tiny English Q5 model and record this as an observed accuracy limitation.
+- The owner confirmed Wi-Fi was off before launch, no other internet connection was active, and the laptop stayed disconnected through transcription. They also confirmed that they edited the transcript and verified the edited value in Notepad. These are owner-observed results. See [Phase 1 verification](phase-1-verification.md).
 
 ## 1A review evidence
 
@@ -34,4 +42,4 @@ Current count: 0 of 6 phases and 1 of 5 Phase 1 tasks accepted.
 - Native security review: the tested listener was on IPv4 loopback. The live health response returned a wildcard CORS origin. The pinned server source exposes inference and model replacement without a native authentication check. Other callers on the same machine can reach the native listener directly. Press's later Node-side checks cannot regulate that listener. Keep the working/public directory free of user data, bound the listener lifetime, and reassess exposure in 1D before treating a shared Windows session as trusted. No model-changing requests or third-party target probes were used. [Pinned native source](https://github.com/OpenWhispr/whisper.cpp/blob/0.0.11/examples/server/server.cpp)
 - The verified clip is one accuracy check for the engine. Live microphone capture and broader accuracy are separate Phase 1 tasks. Independent review requested an empty native static-file directory and a listener ownership check in the proof harness. Governance review added explicitly editable output to the Phase 1 contract.
 - Sol addressed the review findings. Astra reran the final harness on another port. Exit 0; fresh PID 12196, four requests with zero word edits, 718.8 ms to readiness, 115.71 ms native load, 1,187 ms first request, 755.8–1,008.3 ms warm. Restart PID 15436 produced zero word edits. Both children handled Ctrl+C, exited zero and released the listener. All seven pinned hashes were checked before launch. Default routes for both IPv4 and IPv6 were present at both ends of the run.
-- [Sol's measured run](engine-proof.json) and [verification procedure and provenance](engine-proof.md) give the raw timings, asset identities and measurement boundaries. Independent review passed the local inference path. The owner deferred disconnected-host verification to 1E. No disconnected result was recorded. This check remains required for Phase 1 acceptance. See the [implementation plan](PHASE-1-IMPLEMENTATION.md).
+- [Sol's measured run](engine-proof.json) and [verification procedure and provenance](engine-proof.md) give the raw timings, asset identities and measurement boundaries. Independent review passed the local inference path. The owner deferred disconnected-host verification to 1E, where the owner confirmed the disconnected run passed.

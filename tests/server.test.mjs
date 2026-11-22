@@ -22,3 +22,30 @@ test('serves public files and validates the browser request before inference', a
   assert.deepEqual(await response.json(), { text: 'Hello' })
   assert.equal(calls, 1)
 })
+
+test('blocks concurrent recordings and recovers when inference times out', async t => {
+  let release
+  let entered
+  let first = true
+  const started = new Promise(resolve => { entered = resolve })
+  const server = createPressServer({ transcribe: async () => {
+    if (!first) return 'retry worked'
+    first = false
+    entered()
+    await new Promise(resolve => { release = resolve })
+    throw Object.assign(Error('Timed out'), { code: 'ENGINE_TIMEOUT' })
+  } })
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  t.after(() => { release?.(); server.close() })
+  const origin = 'http://127.0.0.1:' + server.address().port
+  const wav = encodeWav(Float32Array.of(0.3))
+  const submit = () => fetch(origin + '/api/transcribe', {
+    method: 'POST', headers: { Origin: origin, 'Content-Type': 'audio/wav' }, body: wav
+  })
+  const inProgress = submit()
+  await started
+  assert.equal((await submit()).status, 409)
+  release()
+  assert.equal((await inProgress).status, 504)
+  assert.deepEqual(await (await submit()).json(), { text: 'retry worked' })
+})

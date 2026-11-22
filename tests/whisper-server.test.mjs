@@ -43,3 +43,25 @@ test('holds one engine while active, stops after idle, and restarts', async () =
   await session.close()
   assert.equal(stops, 2)
 })
+
+test('disposes a child after a failed request and uses a fresh one on retry', async () => {
+  let launches = 0
+  let stops = 0
+  const session = createWhisperSession({ launch: async () => {
+    const generation = ++launches
+    return {
+      alive: () => true,
+      stop: async () => { stops++ },
+      infer: async () => {
+        if (generation === 1) throw Error('Native process exited')
+        return 'retry worked'
+      }
+    }
+  } })
+  await assert.rejects(session.transcribe('wav'), /exited/)
+  assert.equal(stops, 1)
+  assert.equal(await session.transcribe('wav'), 'retry worked')
+  await session.close()
+  assert.equal(launches, 2)
+  assert.equal(stops, 2)
+})

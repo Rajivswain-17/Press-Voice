@@ -1,4 +1,5 @@
 import { createServer } from 'node:http'
+import { execFile } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -99,7 +100,15 @@ export function createPressServer({ transcribe }) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const engine = createWhisperSession()
   const server = createPressServer(engine)
-  server.listen(0, loopback, () => console.log('Open Press at http://' + loopback + ':' + server.address().port))
+  server.listen(0, loopback, () => {
+    const url = 'http://' + loopback + ':' + server.address().port
+    console.log('Open Press at ' + url)
+    if (process.platform === 'win32' && process.argv.includes('--open')) {
+      execFile('rundll32.exe', ['url.dll,FileProtocolHandler', url], { windowsHide: true }, error => {
+        if (error) console.error('Open the local Press address in your browser.')
+      })
+    }
+  })
   let stopping = false
   function shutdown() {
     if (stopping) return

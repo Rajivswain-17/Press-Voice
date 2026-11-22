@@ -1,6 +1,20 @@
 # Press
 
-Press is a lightweight English dictation project for Windows. The first working component is the Task 1A speech engine proof. It transcribes a known recording locally using an existing WAV and one downloaded model. The microphone and application screen are scheduled separately.
+Press is a lightweight English dictation app for Windows. It runs locally in your browser and uses one downloaded speech model. It requires Node.js 22 or newer and has no npm dependencies.
+
+## Set up the local engine
+
+1. Download the [OpenWhispr 0.0.11 CPU ZIP](https://github.com/OpenWhispr/whisper.cpp/releases/download/0.0.11/whisper-server-win32-x64-cpu.zip). Use `Get-FileHash -Algorithm SHA256` on the ZIP and compare it with `7fca73533d5ac5d30f8f6aa0967672321861887c8ea1000cb13196a7d5135fd3` before extraction. Place the EXE and its four bundled DLLs directly in `runtime/`.
+2. Download the [pinned Tiny English Q5 model](https://huggingface.co/ggerganov/whisper.cpp/resolve/f281eb45af861ab5e5297d23694b7d46e090c02c/ggml-tiny.en-q5_1.bin) to `models/ggml-tiny.en-q5_1.bin`. Its SHA-256 is `c77c5766f1cef09b6b7d47f21b546cbddd4157886b3b5d6d4f709e91e66c7c2b`. The [engine evidence](docs/engine-proof.md) records the fixture and individual file hashes.
+
+## Launch and dictate
+
+1. Double-click `start.cmd`, or run `pnpm start` from the project folder and open the printed local URL in Edge or Chrome. Keep the Press terminal open.
+2. Click **Record** and allow microphone permission. Speak a short English sentence, then click **Stop**.
+3. Edit the transcript as needed. Click **Copy text** and paste into Notepad to check that the clipboard contains your edited version.
+4. Press **Ctrl+C** in the Press terminal to stop the app and its native engine. Run `pnpm test` to exercise the automated checks.
+
+If microphone permission is denied, allow microphone access in the browser's site permissions and Windows privacy settings, then retry. Once the local assets are installed, the app is designed to use loopback only. The [verification record](docs/phase-1-verification.md) tracks the disconnected-host run.
 
 ## Run the engine proof
 
