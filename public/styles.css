@@ -1,0 +1,13 @@
+:root { font-family: system-ui, sans-serif; color-scheme: light; background: #f4f2ee; color: #1e2724; }
+body { margin: 0; }
+main { width: min(42rem, calc(100% - 3rem)); margin: clamp(2rem, 9vh, 7rem) auto; }
+h1 { font-size: 3rem; margin: 0; letter-spacing: -0.06em; }
+h1 + p { margin-top: .25rem; color: #465650; }
+.controls { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; }
+button, textarea { font: inherit; }
+button { border: 1px solid #174838; border-radius: .5rem; background: #174838; color: white; padding: .65rem 1rem; cursor: pointer; }
+button[data-state="recording"] { background: #982c30; border-color: #982c30; }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible, textarea:focus-visible { outline: 3px solid #316bb0; outline-offset: 3px; }
+textarea { display: block; box-sizing: border-box; width: 100%; margin: .45rem 0 1rem; resize: vertical; padding: .85rem; border: 1px solid #71817b; border-radius: .5rem; background: #fff; color: inherit; }
+#status, #copy-status { color: #374740; }
