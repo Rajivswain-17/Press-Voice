@@ -6,9 +6,9 @@ This file is the authoritative status record.
 
 | Phase | Objective | Status |
 | --- | --- | --- |
-| 1 | Record English speech, transcribe offline, display, edit and copy | Active |
-| 2 | Configurable global shortcut | Roadmap only |
-| 3 | Safe text insertion in supported apps | Roadmap only |
+| 1 | Record English speech, transcribe offline, display, edit and copy | Accepted and published |
+| 2 | System-wide English dictation with configurable shortcuts, two modes, background capture and safe insertion in verified editors | 2A feasibility tested. Companion and insertion strategy awaiting owner review. |
+| 3 | Expand safe insertion coverage and compatibility across editors | Roadmap only |
 | 4 | Floating microphone overlay and reactive waveform | Roadmap only |
 | 5 | Hindi, Hinglish and additional languages | Roadmap only |
 | 6 | Optimization, settings, packaging and release | Roadmap only |
@@ -43,3 +43,19 @@ Current count: 1 of 6 phases and 5 of 5 Phase 1 tasks accepted. All four impleme
 - The verified clip is one accuracy check for the engine. Live microphone capture and broader accuracy are separate Phase 1 tasks. Independent review requested an empty native static-file directory and a listener ownership check in the proof harness. Governance review added explicitly editable output to the Phase 1 contract.
 - Sol addressed the review findings. Astra reran the final harness on another port. Exit 0; fresh PID 12196, four requests with zero word edits, 718.8 ms to readiness, 115.71 ms native load, 1,187 ms first request, 755.8–1,008.3 ms warm. Restart PID 15436 produced zero word edits. Both children handled Ctrl+C, exited zero and released the listener. All seven pinned hashes were checked before launch. Default routes for both IPv4 and IPv6 were present at both ends of the run.
 - [Sol's measured run](engine-proof.json) and [verification procedure and provenance](engine-proof.md) give the raw timings, asset identities and measurement boundaries. Independent review passed the local inference path. The owner deferred disconnected-host verification to 1E, where the owner confirmed the disconnected run passed.
+
+## Phase 2
+
+See the [implementation plan](PHASE-2-IMPLEMENTATION.md). System-wide insertion for verified editors moved into Phase 2. Phase 3 expands coverage. The Phase 1 baseline is `588455284db223e08ca46462627a088b238fdc90`.
+
+| ID | Task | Dependencies | Status | Test and review evidence | Branch / commit |
+| --- | --- | --- | --- | --- | --- |
+| 2A | Windows global keyboard listener and companion feasibility | Phase 1 | Tested, awaiting owner review | [Windows feasibility evidence](phase-2-feasibility.md). Keyboard edges, conflicting registration, PCM format query, and editor metadata checked. Production adapters and target delivery remain unverified. | `spike/windows-shortcuts` |
+| 2B | Shortcut capture and local settings | 2A | Planned | Pending | — |
+| 2C | Hold-to-talk and tap-to-toggle | 2A | Planned | Pending | — |
+| 2D | Background recording and capture ownership | 2A | Planned | Pending | — |
+| 2E | Target-bound insertion and Copy fallback | 2A | Planned | Pending | — |
+| 2F | Cancel, focus safety and error recovery | 2B, 2C, 2D, 2E | Planned | Pending | — |
+| 2G | Windows integration and offline verification | 2F | Planned | Pending | — |
+
+Phase 2 progress: 0 of 7 tasks accepted.
