@@ -4,7 +4,7 @@ import { shortcutError, virtualKeys } from './shortcuts.mjs'
 
 const executable = fileURLToPath(new URL('./runtime/press-windows-companion.exe', import.meta.url))
 
-export function createWindowsCompanion() {
+export function createWindowsCompanion({ onShortcut = () => {}, launch = spawn } = {}) {
   let child
   let active = false
   let closing = false
@@ -17,6 +17,7 @@ export function createWindowsCompanion() {
     const owned = child
     child = undefined
     active = false
+    onShortcut('reset')
     owned.process.stdin.end()
     const deadline = setTimeout(() => owned.process.kill(), 1000)
     try { await owned.closed } finally { clearTimeout(deadline) }
@@ -27,7 +28,7 @@ export function createWindowsCompanion() {
     if (closing && shortcut) throw shortcutError('COMPANION_UNAVAILABLE', 'Press is shutting down.')
     status = 'Shortcut disabled.'
     if (!shortcut) return
-    const process = spawn(executable, virtualKeys(shortcut).map(String), {
+    const process = launch(executable, virtualKeys(shortcut).map(String), {
       windowsHide: true, stdio: ['pipe', 'pipe', 'ignore']
     })
     process.stdin.on('error', () => {})
@@ -45,6 +46,7 @@ export function createWindowsCompanion() {
           child = undefined
           active = false
           status = 'Windows shortcut listener stopped.'
+          onShortcut('reset')
         }
         reject(unavailable())
       })
@@ -71,6 +73,11 @@ export function createWindowsCompanion() {
             reject(shortcutError('SHORTCUT_CONFLICT', 'Release your shortcut keys and try again.'))
           } else if (event === 'DOWN' && active && Date.now() >= suppressedUntil) {
             count++
+            onShortcut('down')
+          } else if (event === 'UP' && active) {
+            onShortcut('up')
+          } else if (event === 'CANCEL' && active) {
+            onShortcut('cancel')
           }
         }
       })
@@ -87,6 +94,9 @@ export function createWindowsCompanion() {
     status: () => status,
     isActive: () => active,
     activations: () => count,
-    preview: enabled => { suppressedUntil = enabled ? Date.now() + 15000 : 0 }
+    preview: enabled => {
+      suppressedUntil = enabled ? Date.now() + 15000 : 0
+      if (enabled) onShortcut('reset')
+    }
   }
 }

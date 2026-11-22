@@ -24,7 +24,7 @@ On Windows x64 with .NET Framework 4.8.1, run the following from the Press folde
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-companion.ps1
 ```
 
-Launch Press, then open **Shortcut settings**. Choose **Change shortcut**, press and release the desired keys, choose **Hold to talk** or **Tap to toggle**, enable the shortcut, and save. The detected-press count shows when the Windows companion sees a press. Leave the settings page open when checking the count. Use the manual dictation page to record. Task 2B saves both modes and detects keys. Hotkey recording and insertion are later tasks.
+Launch Press, then open **Shortcut settings**. Choose **Change shortcut**, press and release the desired keys, choose **Hold to talk** or **Tap to toggle**, enable the shortcut, and save. The detected-press count shows when the Windows companion sees a press. Leave the settings page open when checking the count. The session controller for both modes is tested with a substitute recorder. Use the manual dictation page to record until Task 2D connects the background microphone.
 
 The supported choices are Left Ctrl, Right Ctrl, or a function key from F1 to F24 except F12. Function keys can include side-specific Ctrl, Shift and Alt. Press blocks known reserved examples and checks for observable registration conflicts. The foreground application can also receive the chosen keys. Use a chord that is free in your apps. Settings are saved in `%LOCALAPPDATA%\Press\settings.json`.
 

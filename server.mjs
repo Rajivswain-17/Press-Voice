@@ -7,6 +7,7 @@ import { maxWavBytes, sampleRate } from './public/wav.mjs'
 import { createWhisperSession, engineError } from './whisper-server.mjs'
 import { openSettings } from './settings.mjs'
 import { createWindowsCompanion } from './windows-companion.mjs'
+import { createDictationSession } from './dictation-session.mjs'
 
 const loopback = '127.0.0.1'
 const staticPages = new Map([
@@ -55,8 +56,7 @@ function validateWav(wav) {
       wav.toString('ascii', 36, 40) !== 'data' || wav.readUInt32LE(40) !== wav.length - 44) throw badWav()
 }
 
-export function createPressServer({ transcribe, settings }) {
-  let busy = false
+export function createPressServer({ transcribe, settings, dictation = createDictationSession() }) {
   return createServer({ requestTimeout: 15000 }, async (request, response) => {
     const expectedHost = loopback + ':' + request.socket.localPort
     response.setHeader('Cache-Control', 'no-store')
@@ -83,7 +83,7 @@ export function createPressServer({ transcribe, settings }) {
           settings.preview(input)
           return json(200, settings.get())
         }
-        if (busy && input?.enabled === true) throw engineError('SETTINGS_BUSY', 'Finish transcription and try again.')
+        if (dictation.isBusy() && input?.enabled === true) throw engineError('SETTINGS_BUSY', 'Finish the current recording and try again.')
         return json(200, await settings.update(input))
       }
       if (request.url !== '/api/transcribe') {
@@ -98,15 +98,15 @@ export function createPressServer({ transcribe, settings }) {
       if (request.method !== 'POST') throw engineError('METHOD', 'Use POST to transcribe a recording.')
       if (request.headers.origin !== 'http://' + expectedHost) throw engineError('BAD_ORIGIN', 'Send recordings from the Press page.')
       if (request.headers['content-type'] !== 'audio/wav') throw engineError('MEDIA_TYPE', 'Send WAV audio.')
-      if (busy) throw engineError('BUSY', 'A recording is already being transcribed.')
-      busy = true
+      const release = dictation.reserveManual()
+      if (!release) throw engineError('BUSY', 'A recording is already in progress.')
       try {
         const wav = await readBody(request, maxWavBytes, tooLarge)
         validateWav(wav)
         const text = wav.subarray(44).some(byte => byte !== 0) ? await transcribe(wav) : ''
         json(200, { text })
       } finally {
-        busy = false
+        release()
       }
     } catch (error) {
       request.resume()
@@ -121,11 +121,20 @@ export function createPressServer({ transcribe, settings }) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const engine = createWhisperSession()
-  const listener = createWindowsCompanion()
-  const settings = process.platform === 'win32' && process.env.LOCALAPPDATA
-    ? await openSettings({ file: join(process.env.LOCALAPPDATA, 'Press', 'settings.json'), listener })
+  const dictation = createDictationSession()
+  let settings
+  const listener = createWindowsCompanion({ onShortcut(event) {
+    if (event === 'down') {
+      const mode = settings?.shortcutMode()
+      if (mode) dictation.down(mode)
+    } else if (event === 'up') dictation.up()
+    else if (event === 'cancel') dictation.cancel()
+    else if (event === 'reset') dictation.reset()
+  } })
+  settings = process.platform === 'win32' && process.env.LOCALAPPDATA
+    ? await openSettings({ file: join(process.env.LOCALAPPDATA, 'Press', 'settings.json'), listener, isBusy: dictation.isBusy })
     : undefined
-  const server = createPressServer({ ...engine, settings })
+  const server = createPressServer({ ...engine, settings, dictation })
   server.listen(0, loopback, () => {
     const url = 'http://' + loopback + ':' + server.address().port
     console.log('Open Press at ' + url)
@@ -141,6 +150,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     stopping = true
     server.close()
     server.closeAllConnections()
+    dictation.reset()
     void engine.close().catch(() => { process.exitCode = 1 })
     void settings?.close().catch(() => { process.exitCode = 1 })
   }

@@ -72,5 +72,14 @@ export async function openSettings({ file, listener, isBusy = () => false }) {
     }
   }
 
-  return { get, update, preview: enabled => listener.preview?.(enabled), close: () => listener.close?.() }
+  function preview(enabled) {
+    if (enabled && isBusy()) throw shortcutError('SETTINGS_BUSY', 'Finish the current recording and try again.')
+    listener.preview?.(enabled)
+  }
+
+  return {
+    get, update, preview,
+    shortcutMode: () => !updating && current.enabled ? current.mode : undefined,
+    close: () => listener.close?.()
+  }
 }

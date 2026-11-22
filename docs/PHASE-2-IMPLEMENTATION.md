@@ -1,6 +1,6 @@
 # Press Phase 2 implementation plan
 
-**Status** — Owner approved the C# companion after 2A and authorized work through 2B only. Phase 1 baseline is `588455284db223e08ca46462627a088b238fdc90`. Preserve its tests, evidence, browser recorder, and local English inference stack. Before approved application implementation, announce **🚨 CODING STARTS NOW**.
+**Status** — Owner approved the C# companion after 2A. Task 2C is complete. Task 2D awaits authorization. Phase 1 baseline is `588455284db223e08ca46462627a088b238fdc90`. Preserve its tests, evidence, browser recorder, and local English inference stack. Before approved application implementation, announce **🚨 CODING STARTS NOW**.
 
 **2B decision and evidence** — The x64 companion builds with the Windows in-box compiler on the installed .NET Framework 4.8.1. Estimated and actual new SDK, workload and toolchain installation are both 0 bytes. The built companion is 8,192 bytes and a live ready process reported 22,122,496 working-set bytes. This is a point sample excluding Node, browser and speech engine. The browser stores no key history. The helper emits binding edges over private process pipes and ignores injected events. Its validated binding set is side-specific single Ctrl or F1–F24 except F12 with optional side-specific Ctrl, Shift or Alt. Reserved candidates such as Alt+F4 are rejected. Settings, activation status and mode selection are available now. Actual recording from the shortcut begins with later approved tasks.
 
@@ -89,6 +89,8 @@ Once 2A freezes contracts, the settings UI, pure mode logic, audio adapter and i
 - **Acceptance.** Node tests cover malformed settings, round-trip, reserved keys, normalization, hot rebind rollback and restart persistence. Manually capture and change a proven single key and chord, toggle modes and enabled state, and confirm no recapture-triggered dictation. If device selection is deferred, show Windows default microphone clearly.
 
 ## 2C — Hold-to-talk and tap-to-toggle
+
+**Implemented adapter contract.** Inject `startCapture({ id, signal })` into `createDictationSession`. It resolves to a capture with `stop()` and `cancel()`. Both operations must settle after cancellation, and cleanup must tolerate cancellation overlapping Stop. After successful Stop, `onRecording({ id, signal, audio })` receives the result. Use the abort signal to discard stale results. There is no native recording adapter in 2C. The existing browser upload reserves the same job slot while its request is active. A lease covering browser microphone capture before upload is part of 2D.
 
 **Build and why.** Translate raw shortcut transitions into exactly one recording session with the user-selected stop behavior.
 

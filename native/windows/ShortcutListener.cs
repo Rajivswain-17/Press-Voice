@@ -70,11 +70,17 @@ internal static class ShortcutListener
             int kind = message.ToInt32();
             if (kind == 0x0100 || kind == 0x0104)
             {
-                if (Pressed.Add(key) && armed && Pressed.SetEquals(binding))
+                if (Pressed.Add(key))
                 {
-                    armed = false;
-                    active = true;
-                    Emit("DOWN");
+                    if (key == 27 || (active && binding.Length == 1 &&
+                        (binding[0] == 162 || binding[0] == 163) && key != binding[0]))
+                        Emit("CANCEL");
+                    if (armed && Pressed.SetEquals(binding))
+                    {
+                        armed = false;
+                        active = true;
+                        Emit("DOWN");
+                    }
                 }
             }
             else if (kind == 0x0101 || kind == 0x0105)

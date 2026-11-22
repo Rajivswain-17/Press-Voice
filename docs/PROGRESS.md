@@ -7,7 +7,7 @@ This file is the authoritative status record.
 | Phase | Objective | Status |
 | --- | --- | --- |
 | 1 | Record English speech, transcribe offline, display, edit and copy | Accepted and published |
-| 2 | System-wide English dictation with configurable shortcuts, two modes, background capture and safe insertion in verified editors | 2A and 2B complete. Tasks 2C–2G awaiting authorization. |
+| 2 | System-wide English dictation with configurable shortcuts, two modes, background capture and safe insertion in verified editors | 2A–2C complete. Tasks 2D–2G awaiting authorization. |
 | 3 | Expand safe insertion coverage and compatibility across editors | Roadmap only |
 | 4 | Floating microphone overlay and reactive waveform | Roadmap only |
 | 5 | Hindi, Hinglish and additional languages | Roadmap only |
@@ -52,10 +52,15 @@ See the [implementation plan](PHASE-2-IMPLEMENTATION.md). System-wide insertion 
 | --- | --- | --- | --- | --- | --- |
 | 2A | Windows global keyboard listener and companion feasibility | Phase 1 | Accepted by owner | [Windows feasibility evidence](phase-2-feasibility.md). Owner approved the C# companion and prioritized native insertion research. | `spike/windows-shortcuts` / `c76b3ae` |
 | 2B | Shortcut capture and local settings | 2A | Complete | 13 Node tests passed. Real companion start, hot rebind, disable and exit passed. Chrome capture, save and fresh-service persistence passed. | `feat/shortcut-settings` |
-| 2C | Hold-to-talk and tap-to-toggle | 2A | Planned | Pending | — |
+| 2C | Hold-to-talk and tap-to-toggle | 2B | Complete | 20 Node tests passed. Rebuilt Windows companion passed startup, rebind, disable, reset delivery and process cleanup. Background microphone end-to-end checks deferred to 2D. | `feat/dictation-modes` |
 | 2D | Background recording and capture ownership | 2A | Planned | Pending | — |
 | 2E | Target-bound insertion and Copy fallback | 2A | Planned | Pending | — |
 | 2F | Cancel, focus safety and error recovery | 2B, 2C, 2D, 2E | Planned | Pending | — |
 | 2G | Windows integration and offline verification | 2F | Planned | Pending | — |
 
-Phase 2 progress: 2A accepted and 2B complete. The physical shortcut and session tests continue with the recording tasks.
+Phase 2 progress: 3 of 7 tasks complete. The physical shortcut-to-microphone tests continue in 2D.
+
+### 2C verification boundaries
+
+- The Node controller receives press, release, cancellation and reset events from the owned Windows companion. It snapshots the selected mode, latches stop during startup and keeps one session slot until asynchronous cleanup or result handling settles. The manual transcription route uses the same slot.
+- Fake capture tests verified hold and toggle transitions, repeated keys, missing or late input, cancellation during startup/stop/result processing, and late listener output after rebind. Windows tested the real helper's ready/rebind/disable path. Physical shortcut recording and capture-to-WAV require the 2D adapter. The Phase 1 recorder and Whisper engine files were preserved.
