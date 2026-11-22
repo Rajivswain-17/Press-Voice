@@ -165,7 +165,7 @@ internal static class ShortcutListener
         try { PeekMessage(message, IntPtr.Zero, 0, 0, 0); }
         finally { Marshal.FreeHGlobal(message); }
         for (int key = 8; key <= 254; key++)
-            if (key != 16 && key != 17 && key != 18 && GetAsyncKeyState(key) < 0) Pressed.Add(key);
+            if (key != 16 && key != 17 && key != 18 && (IsModifier(key) || IsFunction(key)) && GetAsyncKeyState(key) < 0) Pressed.Add(key);
         IntPtr hook = SetWindowsHookEx(13, Callback, GetModuleHandle(null), 0);
         if (hook == IntPtr.Zero) { Console.WriteLine("UNAVAILABLE"); return 5; }
         Thread send = new Thread(() => {
