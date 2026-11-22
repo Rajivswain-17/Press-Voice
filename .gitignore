@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+
+# Package manager caches
+.npm-cache/
+.pnpm-store/
+.npm/
+.cache/
+
+# Build outputs
+dist/
+build/
+out/
+coverage/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# Local AI models
+models/
+*.gguf
+
+# Downloaded native runtime
+runtime/
+*.exe
+*.dll
+
+# Private recordings
+recordings/
+*.wav
+*.pcm
+*.mp3
+!tests/fixtures/*.wav
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini

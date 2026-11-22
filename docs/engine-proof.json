@@ -1,0 +1,159 @@
+{
+    "recordedAtUtc":  "2026-11-21T23:43:42.0338872Z",
+    "windowsBuild":  "10.0.26300.0",
+    "cpu":  "AMD Ryzen 3 5300U with Radeon Graphics",
+    "processorThreads":  4,
+    "port":  18761,
+    "nonLoopbackDefaultRoutesBefore":  {
+                                           "ipv4":  1,
+                                           "ipv6":  1
+                                       },
+    "nonLoopbackDefaultRoutesAfter":  {
+                                          "ipv4":  1,
+                                          "ipv6":  1
+                                      },
+    "reference":  "And so, my fellow Americans, ask not what your country can do for you. Ask what you can do for your country.",
+    "installedEngineAndModelBytes":  35173163,
+    "assets":  [
+                   {
+                       "file":  "whisper-server-win32-x64-cpu.exe",
+                       "bytes":  2081792,
+                       "sha256":  "9df52d68a3656d66ed34e0bbb602a06fd38ba1e0839d0a1e0fb2bbe5b4bddf24"
+                   },
+                   {
+                       "file":  "ggml-tiny.en-q5_1.bin",
+                       "bytes":  32166155,
+                       "sha256":  "c77c5766f1cef09b6b7d47f21b546cbddd4157886b3b5d6d4f709e91e66c7c2b"
+                   },
+                   {
+                       "file":  "jfk.wav",
+                       "bytes":  352078,
+                       "sha256":  "59dfb9a4acb36fe2a2affc14bacbee2920ff435cb13cc314a08c13f66ba7860e"
+                   },
+                   {
+                       "file":  "msvcp140.dll",
+                       "bytes":  557728,
+                       "sha256":  "0f885b509a685d2bbfa652fed26b5fb31d88fbdab0a978c641d1c7b8aa460aa9"
+                   },
+                   {
+                       "file":  "vcomp140.dll",
+                       "bytes":  193152,
+                       "sha256":  "55aba23cdcd6484fbb06f4155b8ca75adfce7a881f10afd0c49457165e677164"
+                   },
+                   {
+                       "file":  "vcruntime140.dll",
+                       "bytes":  124544,
+                       "sha256":  "d5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066"
+                   },
+                   {
+                       "file":  "vcruntime140_1.dll",
+                       "bytes":  49792,
+                       "sha256":  "1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f"
+                   }
+               ],
+    "initial":  {
+                    "pid":  20076,
+                    "health":  "ok",
+                    "launchToHealthMs":  720.2,
+                    "nativeModelLoadMs":  122.86,
+                    "readyWorkingSetBytes":  85987328,
+                    "idleWorkingSetBytes":  123969536,
+                    "idleObservationMs":  2022.9,
+                    "peakWorkingSetThroughIdleBytes":  128401408,
+                    "loadedRuntimeDlls":  [
+                                              "MSVCP140.dll",
+                                              "VCOMP140.DLL",
+                                              "VCRUNTIME140.dll",
+                                              "VCRUNTIME140_1.dll"
+                                          ],
+                    "inference":  [
+                                      {
+                                          "pid":  20076,
+                                          "latencyMs":  1107.1,
+                                          "completedByTcpSnapshotEnd":  false,
+                                          "transcript":  "And so my fellow Americans ask not what your country can do\n for you\n ask what you can do for your country.",
+                                          "accuracy":  {
+                                                           "referenceWords":  22,
+                                                           "wordEdits":  0,
+                                                           "werPercent":  0
+                                                       }
+                                      },
+                                      {
+                                          "pid":  20076,
+                                          "latencyMs":  861.9,
+                                          "completedByTcpSnapshotEnd":  false,
+                                          "transcript":  "And so my fellow Americans ask not what your country can do\n for you\n ask what you can do for your country.",
+                                          "accuracy":  {
+                                                           "referenceWords":  22,
+                                                           "wordEdits":  0,
+                                                           "werPercent":  0
+                                                       }
+                                      },
+                                      {
+                                          "pid":  20076,
+                                          "latencyMs":  853.6,
+                                          "completedByTcpSnapshotEnd":  false,
+                                          "transcript":  "And so my fellow Americans ask not what your country can do\n for you\n ask what you can do for your country.",
+                                          "accuracy":  {
+                                                           "referenceWords":  22,
+                                                           "wordEdits":  0,
+                                                           "werPercent":  0
+                                                       }
+                                      },
+                                      {
+                                          "pid":  20076,
+                                          "latencyMs":  896.9,
+                                          "completedByTcpSnapshotEnd":  false,
+                                          "transcript":  "And so my fellow Americans ask not what your country can do\n for you\n ask what you can do for your country.",
+                                          "accuracy":  {
+                                                           "referenceWords":  22,
+                                                           "wordEdits":  0,
+                                                           "werPercent":  0
+                                                       }
+                                      }
+                                  ],
+                    "tcpSnapshots":  [
+                                         "127.0.0.1:18761 0.0.0.0:0 LISTENING",
+                                         "127.0.0.1:18761 127.0.0.1:62869 ESTABLISHED"
+                                     ],
+                    "gracefulCtrlC":  true,
+                    "exitCode":  0,
+                    "listenerReleased":  true
+                },
+    "restart":  {
+                    "pid":  14896,
+                    "health":  "ok",
+                    "launchToHealthMs":  535.9,
+                    "nativeModelLoadMs":  124.96,
+                    "readyWorkingSetBytes":  85987328,
+                    "idleWorkingSetBytes":  125919232,
+                    "idleObservationMs":  2017,
+                    "peakWorkingSetThroughIdleBytes":  125919232,
+                    "loadedRuntimeDlls":  [
+                                              "MSVCP140.dll",
+                                              "VCOMP140.DLL",
+                                              "VCRUNTIME140.dll",
+                                              "VCRUNTIME140_1.dll"
+                                          ],
+                    "inference":  [
+                                      {
+                                          "pid":  14896,
+                                          "latencyMs":  1195.9,
+                                          "completedByTcpSnapshotEnd":  false,
+                                          "transcript":  "And so my fellow Americans ask not what your country can do\n for you\n ask what you can do for your country.",
+                                          "accuracy":  {
+                                                           "referenceWords":  22,
+                                                           "wordEdits":  0,
+                                                           "werPercent":  0
+                                                       }
+                                      }
+                                  ],
+                    "tcpSnapshots":  [
+                                         "127.0.0.1:18761 0.0.0.0:0 LISTENING",
+                                         "127.0.0.1:18761 127.0.0.1:58593 ESTABLISHED"
+                                     ],
+                    "gracefulCtrlC":  true,
+                    "exitCode":  0,
+                    "listenerReleased":  true
+                }
+}
