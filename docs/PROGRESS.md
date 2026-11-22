@@ -18,7 +18,7 @@ This file is the authoritative status record.
 | ID | Task | Dependencies | Status | Test results | Independent review |
 | --- | --- | --- | --- | --- | --- |
 | 1A | Pinned Windows engine proof and governance | None | Accepted within revised scope | Fixture, hashes, timing, RAM, reuse, restart and loopback passed. Disconnected-host check deferred to 1E and pending. | Engine and harness checks passed. |
-| 1B | Microphone to validated WAV | 1A | Ready for plan approval | Not run | Pending |
+| 1B | Microphone to validated WAV | 1A | Implemented | WAV and lifecycle tests pass. Real microphone check scheduled in 1E. | Local implementation review completed. |
 | 1C | Record, Stop, editable output and Copy | 1A, shared recorder and HTTP contracts | Ready for plan approval | Not run | Pending |
 | 1D | Node-managed server and local inference route | 1A, shared WAV and HTTP contracts | Ready for plan approval | Not run | Pending |
 | 1E | End-to-end integration and offline laptop demonstration | 1B, 1C, 1D | Planned | Disconnected-host verification pending, including the check deferred from 1A. | Pending |
