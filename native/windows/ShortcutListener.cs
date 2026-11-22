@@ -16,6 +16,48 @@ internal static class ShortcutListener
     private static bool active;
     private static bool armed = true;
     private static uint ownerThread;
+    private static readonly object CaptureLock = new object();
+    private static MicrophoneCapture capture;
+    private static int captureId;
+
+    private static void Receive()
+    {
+        try
+        {
+            string line;
+            while ((line = Console.ReadLine()) != null)
+            {
+                string[] command = line.Split(' ');
+                int id;
+                if (command.Length != 2 || !int.TryParse(command[1], out id) || id <= 0) continue;
+                lock (CaptureLock)
+                {
+                    if (command[0] == "START")
+                    {
+                        if (capture != null) { Emit("MIC_BUSY " + id); continue; }
+                        var recording = new MicrophoneCapture(id, Emit);
+                        capture = recording;
+                        captureId = id;
+                        var worker = new Thread(() => recording.Run(() => {
+                            lock (CaptureLock) capture = null;
+                        }));
+                        worker.Start();
+                    }
+                    else if (capture != null && captureId == id)
+                    {
+                        if (command[0] == "STOP") capture.Stop();
+                        else if (command[0] == "CANCEL") capture.Cancel();
+                    }
+                }
+            }
+        }
+        catch (System.IO.IOException) {}
+        finally
+        {
+            lock (CaptureLock) if (capture != null) capture.Cancel();
+            Quit();
+        }
+    }
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr SetWindowsHookEx(int type, Hook callback, IntPtr module, uint thread);
@@ -133,11 +175,7 @@ internal static class ShortcutListener
         send.IsBackground = true;
         send.Start();
         Emit("READY 1");
-        Thread receive = new Thread(() => {
-            try { Console.ReadLine(); }
-            catch (System.IO.IOException) {}
-            finally { Quit(); }
-        });
+        Thread receive = new Thread(Receive);
         receive.IsBackground = true;
         receive.Start();
         try { Application.Run(); }

@@ -7,7 +7,7 @@ This file is the authoritative status record.
 | Phase | Objective | Status |
 | --- | --- | --- |
 | 1 | Record English speech, transcribe offline, display, edit and copy | Accepted and published |
-| 2 | System-wide English dictation with configurable shortcuts, two modes, background capture and safe insertion in verified editors | 2A–2C complete. Tasks 2D–2G awaiting authorization. |
+| 2 | System-wide English dictation with configurable shortcuts, two modes, background capture and safe insertion in verified editors | 2A–2C complete. 2D implemented, with physical shortcut verification pending. |
 | 3 | Expand safe insertion coverage and compatibility across editors | Roadmap only |
 | 4 | Floating microphone overlay and reactive waveform | Roadmap only |
 | 5 | Hindi, Hinglish and additional languages | Roadmap only |
@@ -53,12 +53,12 @@ See the [implementation plan](PHASE-2-IMPLEMENTATION.md). System-wide insertion 
 | 2A | Windows global keyboard listener and companion feasibility | Phase 1 | Accepted by owner | [Windows feasibility evidence](phase-2-feasibility.md). Owner approved the C# companion and prioritized native insertion research. | `spike/windows-shortcuts` / `c76b3ae` |
 | 2B | Shortcut capture and local settings | 2A | Complete | 13 Node tests passed. Real companion start, hot rebind, disable and exit passed. Chrome capture, save and fresh-service persistence passed. | `feat/shortcut-settings` |
 | 2C | Hold-to-talk and tap-to-toggle | 2B | Complete | 20 Node tests passed. Rebuilt Windows companion passed startup, rebind, disable, reset delivery and process cleanup. Background microphone end-to-end checks deferred to 2D. | `feat/dictation-modes` |
-| 2D | Background recording and capture ownership | 2A | Planned | Pending | — |
+| 2D | Background recording and capture ownership | 2C | Implemented. Physical shortcut verification pending. | [Windows capture evidence](phase-2-background-capture.md). Live microphone, WAV and Whisper checks passed with controller-driven edges. | `feat/background-capture` |
 | 2E | Target-bound insertion and Copy fallback | 2A | Planned | Pending | — |
 | 2F | Cancel, focus safety and error recovery | 2B, 2C, 2D, 2E | Planned | Pending | — |
 | 2G | Windows integration and offline verification | 2F | Planned | Pending | — |
 
-Phase 2 progress: 3 of 7 tasks complete. The physical shortcut-to-microphone tests continue in 2D.
+Phase 2 progress: 3 of 7 tasks complete. Task 2D is implemented and awaiting the physical shortcut-to-microphone check.
 
 ### 2C verification boundaries
 

@@ -28,18 +28,18 @@ export function createDictationSession({ startCapture, onRecording = async () =>
       session.capture = await startCapture(context)
       if (abort.signal.aborted) return
       message = 'Recording.'
-      await stopRequested
+      await Promise.race([stopRequested, session.capture.finished].filter(Boolean))
       if (abort.signal.aborted) return
       message = 'Finishing recording.'
       const audio = await session.capture.stop()
       if (abort.signal.aborted) return
       message = 'Processing recording.'
-      await onRecording({ ...context, audio })
-      if (!abort.signal.aborted) message = 'Recording completed.'
-    } catch {
+      const resultStatus = await onRecording({ ...context, audio })
+      if (!abort.signal.aborted) message = typeof resultStatus === 'string' ? resultStatus : 'Recording completed.'
+    } catch (error) {
       if (!abort.signal.aborted) {
         abort.abort()
-        message = 'Recording failed. Try again.'
+        message = error?.captureMessage || 'Recording failed. Try again.'
       }
     } finally {
       if (abort.signal.aborted) await dispose(session)

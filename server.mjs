@@ -1,5 +1,6 @@
 import { createServer } from 'node:http'
 import { execFile } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -56,7 +57,13 @@ function validateWav(wav) {
       wav.toString('ascii', 36, 40) !== 'data' || wav.readUInt32LE(40) !== wav.length - 44) throw badWav()
 }
 
-export function createPressServer({ transcribe, settings, dictation = createDictationSession() }) {
+function recognizeWav(wav, transcribe) {
+  validateWav(wav)
+  return wav.subarray(44).some(byte => byte !== 0) ? transcribe(wav) : ''
+}
+
+export function createPressServer({ transcribe, settings, dictation = createDictationSession(), background }) {
+  let browserLease
   return createServer({ requestTimeout: 15000 }, async (request, response) => {
     const expectedHost = loopback + ':' + request.socket.localPort
     response.setHeader('Cache-Control', 'no-store')
@@ -69,6 +76,25 @@ export function createPressServer({ transcribe, settings, dictation = createDict
 
     try {
       if (request.headers.host !== expectedHost) throw engineError('BAD_ORIGIN', 'Open Press using the displayed local address.')
+      if (request.url === '/api/capture') {
+        if (request.method !== 'POST') throw engineError('METHOD', 'Use POST to reserve the microphone.')
+        if (request.headers.origin !== 'http://' + expectedHost) throw engineError('BAD_ORIGIN', 'Start capture from the Press page.')
+        const release = dictation.reserveManual()
+        if (!release) throw engineError('BUSY', 'A recording is already in progress.')
+        const lease = browserLease = { token: randomUUID(), release, connected: true, uploaded: false, inFlight: false }
+        response.once('close', () => {
+          lease.connected = false
+          if (!lease.inFlight) lease.release()
+          if (browserLease === lease) browserLease = undefined
+        })
+        request.resume()
+        response.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
+        response.write(lease.token + '\n')
+        return
+      }
+      if (request.url === '/api/background' && background && request.method === 'GET') {
+        return json(200, { status: dictation.status(), text: background() })
+      }
       if (settings && ['/api/settings', '/api/settings/preview'].includes(request.url)) {
         if (request.method === 'GET' && request.url === '/api/settings') return json(200, settings.get())
         if (request.method !== 'POST') throw engineError('METHOD', 'Use POST to change shortcut settings.')
@@ -98,12 +124,17 @@ export function createPressServer({ transcribe, settings, dictation = createDict
       if (request.method !== 'POST') throw engineError('METHOD', 'Use POST to transcribe a recording.')
       if (request.headers.origin !== 'http://' + expectedHost) throw engineError('BAD_ORIGIN', 'Send recordings from the Press page.')
       if (request.headers['content-type'] !== 'audio/wav') throw engineError('MEDIA_TYPE', 'Send WAV audio.')
-      const release = dictation.reserveManual()
+      const token = request.headers['x-press-capture']
+      const lease = token && browserLease?.token === token && !browserLease.uploaded ? browserLease : undefined
+      const release = lease ? () => {
+        lease.inFlight = false
+        if (!lease.connected) lease.release()
+      } : token === undefined ? dictation.reserveManual() : null
       if (!release) throw engineError('BUSY', 'A recording is already in progress.')
+      if (lease) lease.uploaded = lease.inFlight = true
       try {
         const wav = await readBody(request, maxWavBytes, tooLarge)
-        validateWav(wav)
-        const text = wav.subarray(44).some(byte => byte !== 0) ? await transcribe(wav) : ''
+        const text = await recognizeWav(wav, transcribe)
         json(200, { text })
       } finally {
         release()
@@ -121,7 +152,15 @@ export function createPressServer({ transcribe, settings, dictation = createDict
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const engine = createWhisperSession()
-  const dictation = createDictationSession()
+  let backgroundText = ''
+  const dictation = createDictationSession({
+    startCapture: context => listener.startCapture(context),
+    async onRecording({ audio, signal }) {
+      const text = await recognizeWav(audio, engine.transcribe)
+      if (!signal.aborted && text) backgroundText = text
+      return text ? 'Shortcut transcript ready.' : 'No speech detected.'
+    }
+  })
   let settings
   const listener = createWindowsCompanion({ onShortcut(event) {
     if (event === 'down') {
@@ -134,7 +173,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   settings = process.platform === 'win32' && process.env.LOCALAPPDATA
     ? await openSettings({ file: join(process.env.LOCALAPPDATA, 'Press', 'settings.json'), listener, isBusy: dictation.isBusy })
     : undefined
-  const server = createPressServer({ ...engine, settings, dictation })
+  const server = createPressServer({ ...engine, settings, dictation, background: () => backgroundText })
   server.listen(0, loopback, () => {
     const url = 'http://' + loopback + ':' + server.address().port
     console.log('Open Press at ' + url)

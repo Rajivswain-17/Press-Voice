@@ -2,7 +2,7 @@ import { createRecorder } from './recorder.mjs'
 
 export function createController({
   recorder, transcribe, render, writeText, readText, clipboard,
-  selectText, renderCopy
+  selectText, renderCopy, finish = () => {}
 }) {
   let state = 'ready'
   const showCopy = renderCopy ?? (message => render(state, message))
@@ -25,6 +25,8 @@ export function createController({
       show('ready', text ? 'Transcript ready.' : 'No speech detected. Try again.')
     } catch (error) {
       captureError(error)
+    } finally {
+      finish()
     }
   }
 
@@ -56,11 +58,11 @@ export function createController({
   return { record, stop, copy, captureError }
 }
 
-async function transcribe(wav) {
+async function transcribe(wav, token) {
   let response
   try {
     response = await fetch('/api/transcribe', {
-      method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav
+      method: 'POST', headers: { 'Content-Type': 'audio/wav', 'X-Press-Capture': token }, body: wav
     })
   } catch {
     throw Error('Could not reach Press. Check that it is running and try again.')
@@ -72,6 +74,51 @@ async function transcribe(wav) {
   return result.text
 }
 
+function createBrowserLease(recorder, onLost) {
+  let current
+
+  function release() {
+    const lease = current
+    current = undefined
+    lease?.abort.abort()
+  }
+
+  async function start() {
+    const session = current = { abort: new AbortController() }
+    try {
+      const response = await fetch('/api/capture', { method: 'POST', signal: session.abort.signal })
+      if (!response.ok) throw Error((await response.json()).error?.message ?? 'Could not reserve the microphone.')
+      const reader = response.body.getReader()
+      let line = ''
+      const decode = new TextDecoder()
+      while (!line.includes('\n') && line.length < 50) {
+        const { value, done } = await reader.read()
+        if (done) break
+        line += decode.decode(value, { stream: true })
+      }
+      if (current !== session || !/^[a-f0-9-]{36}\n$/.test(line)) throw Error('The microphone reservation closed.')
+      session.token = line.trim()
+      function lost() {
+        if (current !== session) return
+        recorder.cancel()
+        release()
+        onLost(Error('The microphone reservation closed. Try again.'))
+      }
+      void reader.read().then(lost, lost)
+      await recorder.start()
+      if (current !== session) throw Error('The microphone reservation closed. Try again.')
+    } catch (error) {
+      if (current === session) { recorder.cancel(); release() }
+      throw error
+    }
+  }
+
+  return {
+    start, stop: () => recorder.stop(), release, token: () => current?.token,
+    cancel() { recorder.cancel(); release() }
+  }
+}
+
 if (typeof document !== 'undefined') {
   const button = document.querySelector('#record')
   const copy = document.querySelector('#copy')
@@ -80,11 +127,12 @@ if (typeof document !== 'undefined') {
   const transcript = document.querySelector('#transcript')
   const recorder = createRecorder({
     onLimit: () => void controller.stop(),
-    onError: error => controller.captureError(error)
+    onError: error => { lease.release(); controller.captureError(error) }
   })
+  const lease = createBrowserLease(recorder, error => controller.captureError(error))
   const refreshCopy = () => { copy.disabled = !transcript.value.trim() }
   const controller = createController({
-    recorder, transcribe,
+    recorder: lease, transcribe: wav => transcribe(wav, lease.token()), finish: lease.release,
     render(state, message) {
       button.textContent = state === 'recording' ? 'Stop' : 'Record'
       button.dataset.state = state
@@ -100,5 +148,5 @@ if (typeof document !== 'undefined') {
   button.addEventListener('click', controller.record)
   copy.addEventListener('click', controller.copy)
   transcript.addEventListener('input', () => { copyStatus.textContent = ''; refreshCopy() })
-  window.addEventListener('pagehide', recorder.cancel)
+  window.addEventListener('pagehide', lease.cancel)
 }

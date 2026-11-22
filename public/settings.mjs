@@ -7,6 +7,10 @@ const message = document.querySelector('#message')
 const status = document.querySelector('#listener-status')
 const activations = document.querySelector('#activations')
 const save = document.querySelector('#save')
+const backgroundStatus = document.querySelector('#background-status')
+const backgroundText = document.querySelector('#background-text')
+const backgroundCopy = document.querySelector('#background-copy')
+const backgroundCopyStatus = document.querySelector('#background-copy-status')
 let candidate = null
 let captureState
 
@@ -34,6 +38,26 @@ function showSettings(data) {
   showCandidate()
   showStatus(data)
 }
+
+async function showBackground() {
+  const result = await request('/api/background')
+  if (backgroundStatus.textContent !== result.status) backgroundStatus.textContent = result.status
+  if (backgroundText.value !== result.text) {
+    backgroundText.value = result.text
+    backgroundCopy.disabled = !result.text
+    backgroundCopyStatus.textContent = ''
+  }
+}
+
+backgroundCopy.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(backgroundText.value)
+    backgroundCopyStatus.textContent = 'Copied.'
+  } catch {
+    backgroundText.select()
+    backgroundCopyStatus.textContent = 'Press Ctrl+C to copy.'
+  }
+})
 
 function endCapture(keys) {
   if (!captureState) return
@@ -101,11 +125,15 @@ form.addEventListener('submit', async event => {
 
 try {
   showSettings(await request('/api/settings'))
+  void showBackground().catch(() => {})
   controls.disabled = false
   setInterval(() => {
-    if (!document.hidden) void request('/api/settings').then(showStatus).catch(() => {
-      status.textContent = 'Could not reach Press.'
-    })
+    if (!document.hidden) {
+      void request('/api/settings').then(showStatus).catch(() => {
+        status.textContent = 'Could not reach Press.'
+      })
+      void showBackground().catch(() => {})
+    }
   }, 1000)
 } catch (error) {
   status.textContent = error.message

@@ -1,6 +1,6 @@
 # Press Phase 2 implementation plan
 
-**Status** — Owner approved the C# companion after 2A. Task 2C is complete. Task 2D awaits authorization. Phase 1 baseline is `588455284db223e08ca46462627a088b238fdc90`. Preserve its tests, evidence, browser recorder, and local English inference stack. Before approved application implementation, announce **🚨 CODING STARTS NOW**.
+**Status** — Owner approved the C# companion after 2A. Tasks 2A–2C are complete. Task 2D is implemented and in verification. Phase 1 baseline is `588455284db223e08ca46462627a088b238fdc90`. Preserve its tests, evidence, browser recorder, and local English inference stack. Before approved application implementation, announce **🚨 CODING STARTS NOW**.
 
 **2B decision and evidence** — The x64 companion builds with the Windows in-box compiler on the installed .NET Framework 4.8.1. Estimated and actual new SDK, workload and toolchain installation are both 0 bytes. The built companion is 8,192 bytes and a live ready process reported 22,122,496 working-set bytes. This is a point sample excluding Node, browser and speech engine. The browser stores no key history. The helper emits binding edges over private process pipes and ignores injected events. Its validated binding set is side-specific single Ctrl or F1–F24 except F12 with optional side-specific Ctrl, Shift or Alt. Reserved candidates such as Alt+F4 are rejected. Settings, activation status and mode selection are available now. Actual recording from the shortcut begins with later approved tasks.
 
@@ -99,6 +99,8 @@ Once 2A freezes contracts, the settings UI, pure mode logic, audio adapter and i
 - **Acceptance.** Test both paths, repeated down/up, key-release order, held-key rearm, immediate release, two presses during startup, late results, mode reconfiguration, and overlap with the manual route. Manually verify both modes in another app without changing its focus.
 
 ## 2D — Background microphone recording
+
+**Implemented path.** WinMM reads the verified default Windows microphone. Private stdio carries session-ID capture commands and a bounded Base64 WAV reply. The browser reserves the shared slot from before microphone permission until Stop and upload settle. See [observed Windows results and limits](phase-2-background-capture.md).
 
 **Build and why.** Record while another app is focused and while the settings browser is closed. Pass equivalent WAV data to the existing engine.
 
