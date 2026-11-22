@@ -15,6 +15,7 @@ Press is a lightweight, local Windows dictation application. Phase 1 covers Engl
 - Avoid reading `.git`, dependency caches, build outputs, temporary files, or generated artifacts unless relevant. Read large lockfiles in full only when strictly necessary.
 - Never read model weights, executables, DLLs, or audio recordings as text.
 - Keep searches targeted to the current task. Avoid unrelated projects, parent directories, user directories, and other drives. Avoid repeated searches for absent files and rereads of unchanged files.
+- Keep command output concise. Use targeted searches that respect ignore rules. Explain the need and obtain owner approval before inspecting ignored or unrelated files. Avoid rereading unchanged files unless specific information is needed.
 - Minimize token consumption while preserving implementation correctness and test coverage. These rules apply to all future development tasks and models.
 
 ## Local inference contracts

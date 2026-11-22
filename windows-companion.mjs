@@ -30,7 +30,7 @@ export function createWindowsCompanion({ onShortcut = () => {}, launch = spawn }
     status = 'Shortcut disabled.'
     if (!shortcut) return
     const process = launch(executable, virtualKeys(shortcut).map(String), {
-      windowsHide: true, stdio: ['pipe', 'pipe', 'ignore']
+      windowsHide: true, stdio: ['pipe', 'pipe', globalThis.process.env.PRESS_2E_DIAGNOSTICS === '1' ? 'inherit' : 'ignore']
     })
     process.stdin.on('error', () => {})
     const closed = new Promise(resolve => process.once('close', resolve))
@@ -76,7 +76,8 @@ export function createWindowsCompanion({ onShortcut = () => {}, launch = spawn }
             reject(shortcutError('SHORTCUT_CONFLICT', 'Windows could not register this combination. Choose a different shortcut.'))
           } else if (event === 'HELD') {
             reject(shortcutError('SHORTCUT_CONFLICT', 'Release your shortcut keys and try again.'))
-          } else if (event === 'DOWN' && active && Date.now() >= suppressedUntil) {
+          } else if (event === 'DOWN' && active) {
+            if (Date.now() < suppressedUntil) continue
             count++
             onShortcut('down')
           } else if (event === 'UP' && active) {

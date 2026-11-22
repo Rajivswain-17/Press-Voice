@@ -54,11 +54,11 @@ See the [implementation plan](PHASE-2-IMPLEMENTATION.md). System-wide insertion 
 | 2B | Shortcut capture and local settings | 2A | Complete | 13 Node tests passed. Real companion start, hot rebind, disable and exit passed. Chrome capture, save and fresh-service persistence passed. | `feat/shortcut-settings` |
 | 2C | Hold-to-talk and tap-to-toggle | 2B | Complete | 20 Node tests passed. Rebuilt Windows companion passed startup, rebind, disable, reset delivery and process cleanup. Background microphone end-to-end checks deferred to 2D. | `feat/dictation-modes` |
 | 2D | Background recording and capture ownership | 2C | Accepted by owner. | [Windows capture evidence](phase-2-background-capture.md). 24 Node tests passed. Live microphone, WAV and Whisper checks passed with controller-driven edges. Earlier physical probes failed because of a phantom multimedia-key defect, now fixed in `ShortcutListener.cs`. On 2026-11-22 the physical Left Ctrl probe passed both modes: valid WAVs of 6.579 s and 11.283 s, correct press and release counts, Notepad focused, clean exit. Quick release and Escape (Hold and Toggle) passed physically. The owner saw the background transcript in Settings using isolated temporary settings. Device removal and microphone permission denial were NOT physically tested and are not claimed as passed. They need system microphone changes. The owner accepted 2D with that gap. Possible shortcut interference, root cause unconfirmed: five activations were counted during the Settings test and are carried to 2F. | `feat/background-capture` |
-| 2E | Target-bound insertion and Copy fallback | 2A | Planned | Pending | — |
+| 2E | Production Copy-only and Tier A fixture evidence | 2A, 2D | Verified under revised scope | Production refusal, Node suite and native fixtures passed. Notepad round trip INCONCLUSIVE; external insertion deferred to Phase 3. | feat/targeted-insertion |
 | 2F | Cancel, focus safety and error recovery | 2B, 2C, 2D, 2E | Planned | Pending | — |
 | 2G | Windows integration and offline verification | 2F | Planned | Pending | — |
 
-Phase 2 progress: 4 of 7 tasks complete. Task 2D is accepted. It passed physical checks for both modes, quick release, Escape cancellation and the Settings transcript. Device removal and Windows privacy denial were not physically tested.
+Phase 2 progress: 5 of 7 tasks complete. Task 2D is accepted. It passed physical checks for both modes, quick release, Escape cancellation and the Settings transcript. Device removal and Windows privacy denial were not physically tested.
 
 ### Carried to 2F
 

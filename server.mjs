@@ -150,16 +150,23 @@ export function createPressServer({ transcribe, settings, dictation = createDict
   })
 }
 
+export function backgroundCompletion(transcribe, remember, insert) {
+  return async function onRecording({ id, audio, signal }) {
+    const text = await recognizeWav(audio, transcribe)
+    if (signal.aborted || !text) return 'No speech detected.'
+    remember(text)
+    if (!insert) return 'Transcript ready. Use Copy in Settings.'
+    if (audio.length < 44 + 16000) return 'Short recording. Use Copy in Settings.'
+    return insert(id, text)
+  }
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const engine = createWhisperSession()
   let backgroundText = ''
   const dictation = createDictationSession({
     startCapture: context => listener.startCapture(context),
-    async onRecording({ audio, signal }) {
-      const text = await recognizeWav(audio, engine.transcribe)
-      if (!signal.aborted && text) backgroundText = text
-      return text ? 'Shortcut transcript ready.' : 'No speech detected.'
-    }
+    onRecording: backgroundCompletion(engine.transcribe, text => { backgroundText = text })
   })
   let settings
   const listener = createWindowsCompanion({ onShortcut(event) {

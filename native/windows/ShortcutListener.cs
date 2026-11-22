@@ -29,6 +29,7 @@ internal static class ShortcutListener
             {
                 string[] command = line.Split(' ');
                 int id;
+                if (TargetInsertion.Command(command, Emit)) continue;
                 if (command.Length != 2 || !int.TryParse(command[1], out id) || id <= 0) continue;
                 lock (CaptureLock)
                 {
@@ -54,6 +55,7 @@ internal static class ShortcutListener
         catch (System.IO.IOException) {}
         finally
         {
+            TargetInsertion.Invalidate();
             lock (CaptureLock) if (capture != null) capture.Cancel();
             Quit();
         }
@@ -102,6 +104,12 @@ internal static class ShortcutListener
         if (!Events.TryAdd(signal)) Quit();
     }
 
+    private static void Trace(string kind)
+    {
+        if (TargetInsertion.Diagnostics)
+            Events.TryAdd("TRACE shortcut " + kind + " tick=" + System.Diagnostics.Stopwatch.GetTimestamp());
+    }
+
     private static void Quit() { PostThreadMessage(ownerThread, 0x0012, UIntPtr.Zero, IntPtr.Zero); }
 
     private static IntPtr OnKeyboard(int code, IntPtr message, IntPtr data)
@@ -112,15 +120,20 @@ internal static class ShortcutListener
             int kind = message.ToInt32();
             if (kind == 0x0100 || kind == 0x0104)
             {
-                if (Pressed.Add(key))
+                if (Array.IndexOf(binding, key) < 0) TargetInsertion.Invalidate();
+                bool firstDown = Pressed.Add(key);
+                if (!firstDown && Array.IndexOf(binding, key) >= 0) Trace("REPEAT");
+                if (firstDown)
                 {
                     if (key == 27 || (active && binding.Length == 1 &&
                         (binding[0] == 162 || binding[0] == 163) && key != binding[0]))
-                        Emit("CANCEL");
+                        { Trace("CANCEL"); Emit("CANCEL"); }
                     if (armed && Pressed.SetEquals(binding))
                     {
                         armed = false;
                         active = true;
+                        TargetInsertion.Edge();
+                        Trace("DOWN");
                         Emit("DOWN");
                     }
                 }
@@ -131,7 +144,8 @@ internal static class ShortcutListener
                 if (active && Array.IndexOf(binding, key) >= 0)
                 {
                     active = false;
-                    Emit("UP");
+                    Trace("UP");
+                        Emit("UP");
                 }
                 if (!binding.Any(Pressed.Contains)) armed = true;
             }
@@ -169,11 +183,15 @@ internal static class ShortcutListener
         IntPtr hook = SetWindowsHookEx(13, Callback, GetModuleHandle(null), 0);
         if (hook == IntPtr.Zero) { Console.WriteLine("UNAVAILABLE"); return 5; }
         Thread send = new Thread(() => {
-            try { foreach (string signal in Events.GetConsumingEnumerable()) Console.WriteLine(signal); }
+            try { foreach (string signal in Events.GetConsumingEnumerable()) {
+                if (signal.StartsWith("TRACE ")) Console.Error.WriteLine(signal);
+                else Console.WriteLine(signal);
+            } }
             catch (System.IO.IOException) { Quit(); }
         });
         send.IsBackground = true;
         send.Start();
+        TargetInsertion.Install();
         Emit("READY 1");
         Thread receive = new Thread(Receive);
         receive.IsBackground = true;
