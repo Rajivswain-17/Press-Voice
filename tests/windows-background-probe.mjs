@@ -1,6 +1,8 @@
 // Windows integration check. Captures brief audio in memory only and prints
-// format and duration. Use --physical to supply real shortcut edges with F8.
+// format and duration. Use --physical for a temporary Left Ctrl binding.
 import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { setTimeout as delay } from 'node:timers/promises'
 import { createWindowsCompanion } from '../windows-companion.mjs'
 import { createDictationSession } from '../dictation-session.mjs'
@@ -8,8 +10,22 @@ import { createWhisperSession } from '../whisper-server.mjs'
 
 const physical = process.argv.includes('--physical')
 const engine = process.argv.includes('--infer') ? createWhisperSession() : undefined
+const runFile = promisify(execFile)
 let mode
 let wav
+let presses
+let releases
+let foreground
+
+async function sampleForeground() {
+  const { stdout } = await runFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', [
+    'Add-Type -TypeDefinition \'using System; using System.Runtime.InteropServices; public static class PressFocusSample { [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr window, out uint process); }\'',
+    '[uint32]$ownerId=0',
+    '[void][PressFocusSample]::GetWindowThreadProcessId([PressFocusSample]::GetForegroundWindow(),[ref]$ownerId)',
+    '(Get-Process -Id $ownerId).ProcessName'
+  ].join('; ')], { windowsHide: true, timeout: 5000 })
+  return stdout.trim().toLowerCase()
+}
 const controller = createDictationSession({
   startCapture: context => companion.startCapture(context),
   async onRecording({ audio }) {
@@ -18,8 +34,14 @@ const controller = createDictationSession({
   }
 })
 const companion = createWindowsCompanion({ onShortcut(event) {
-  if (event === 'down') controller.down(mode)
-  if (event === 'up') controller.up()
+  if (event === 'down') {
+    controller.down(mode)
+    if (physical && ++presses === 1) foreground = sampleForeground().catch(() => '')
+  }
+  if (event === 'up') {
+    releases++
+    controller.up()
+  }
   if (event === 'cancel') controller.cancel()
   if (event === 'reset') controller.reset()
 } })
@@ -31,13 +53,15 @@ async function waitFor(predicate, seconds, description) {
 }
 
 try {
-  await companion.replace(['F8'])
+  await companion.replace([physical ? 'ControlLeft' : 'F8'])
   for (mode of ['hold', 'toggle']) {
     wav = undefined
+    presses = releases = 0
+    foreground = undefined
     if (physical) {
       console.log(mode === 'hold'
-        ? 'While another Windows app is focused, hold F8 and speak for about 2 seconds. Release F8.'
-        : 'While another Windows app is focused, tap F8, speak for about 2 seconds, then tap F8 again.')
+        ? 'READY: Hold Left Ctrl in Notepad, speak for 2–3 seconds, then release.'
+        : 'READY: Tap Left Ctrl in Notepad, speak for 2–3 seconds, then tap Left Ctrl again.')
       await waitFor(() => controller.isBusy(), 60, 'Expected a physical activation')
     } else {
       controller.down(mode)
@@ -61,6 +85,16 @@ try {
     const seconds = (wav.length - 44) / 32000
     assert.ok(seconds > 0 && seconds <= 60)
     if (!physical) assert.ok(seconds >= 0.9 && seconds < 1.8, 'Duration ' + seconds)
+    if (physical) {
+      const expected = mode === 'hold' ? 1 : 2
+      await waitFor(() => releases >= expected, 3, 'Expected the physical key release')
+      assert.equal(presses, expected)
+      assert.equal(releases, expected)
+      assert.ok(seconds >= 0.5 && seconds < 30, 'Unexpected physical recording duration')
+      assert.ok(wav.subarray(44).some(byte => byte !== 0), 'The WAV contained only digital silence')
+      assert.equal(await foreground, 'notepad', 'Notepad was not foreground near activation')
+      assert.equal(await sampleForeground(), 'notepad', 'Notepad was not foreground after capture')
+    }
     console.log(mode + ': ' + seconds.toFixed(3) + ' s, ' + wav.length + ' bytes, 16 kHz mono PCM16')
   }
 
